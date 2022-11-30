@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {
@@ -8,22 +9,41 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { theme } from "./colors";
 
+const TYPE_KEY = "@type";
 const STORAGE_KEY = "@toDos";
 
 export default function App() {
   const [working, setWorking] = useState(true);
   const [text, setText] = useState("");
   const [toDos, setToDos] = useState({});
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     loadToDos();
+    loadType();
   }, []);
-  const study = () => setWorking(false);
-  const work = () => setWorking(true);
+  const study = async () => {
+    setWorking(false);
+    try {
+      await AsyncStorage.setItem(TYPE_KEY, "false");
+    } catch (e) {
+      console.log(e);
+    }
+  };
+  const work = async () => {
+    setWorking(true);
+    try {
+      await AsyncStorage.setItem(TYPE_KEY, "true");
+    } catch (e) {
+      console.log(e);
+    }
+  };
   const onChangeText = (payload) => setText(payload);
-  const saveToRos = async (toSave) => {
+  const saveToDos = async (toSave) => {
     try {
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
     } catch (e) {
@@ -35,6 +55,15 @@ export default function App() {
       const storageData = await AsyncStorage.getItem(STORAGE_KEY);
       if (storageData === null) return;
       setToDos(JSON.parse(storageData));
+      setLoading(false);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+  const loadType = async () => {
+    try {
+      const storageType = await AsyncStorage.getItem(TYPE_KEY);
+      setWorking(JSON.parse(storageType));
     } catch (e) {
       console.log(e);
     }
@@ -43,8 +72,24 @@ export default function App() {
     if (text === "") return;
     const newToDos = { ...toDos, [Date.now()]: { text, working } };
     setToDos(newToDos);
-    await saveToRos(newToDos);
+    await saveToDos(newToDos);
     setText("");
+  };
+  const deleteToDo = async (id) => {
+    Alert.alert("Delete To DO?", "Are you sure?", [
+      { text: "Cancel" },
+      {
+        text: "I'm sure",
+        style: "destructive",
+        onPress: async () => {
+          const newToDos = { ...toDos };
+          delete newToDos[id];
+          setToDos(newToDos);
+          await saveToDos(newToDos);
+        },
+      },
+    ]);
+    return;
   };
   return (
     <View style={styles.container}>
@@ -79,15 +124,22 @@ export default function App() {
         style={styles.input}
         placeholder={working ? "Add a To Do" : "Add your study plan"}
       />
-      <ScrollView>
-        {Object.keys(toDos).map((key) =>
-          toDos[key].working === working ? (
-            <View style={styles.toDo} key={key}>
-              <Text style={styles.toDoText}>{toDos[key].text}</Text>
-            </View>
-          ) : null
-        )}
-      </ScrollView>
+      {loading ? (
+        <ActivityIndicator style={styles.loading} size="large" color="white" />
+      ) : (
+        <ScrollView>
+          {Object.keys(toDos).map((key) =>
+            toDos[key].working === working ? (
+              <View style={styles.toDo} key={key}>
+                <Text style={styles.toDoText}>{toDos[key].text}</Text>
+                <TouchableOpacity onPress={() => deleteToDo(key)}>
+                  <Ionicons name="ios-trash" size={20} color="white" />
+                </TouchableOpacity>
+              </View>
+            ) : null
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -116,6 +168,9 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   toDo: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     backgroundColor: theme.gray,
     marginBottom: 10,
     paddingVertical: 20,
@@ -126,5 +181,8 @@ const styles = StyleSheet.create({
     color: theme.white,
     fontSize: 16,
     fontWeight: "600",
+  },
+  loading: {
+    marginTop: 50,
   },
 });
