@@ -104,20 +104,35 @@ export default function App() {
     await saveToDos(newToDos);
   };
   const editToDo = async (id) => {
-    Alert.prompt("Edit To Do", "Please Edit To DO", [
-      { text: "Cancel" },
-      {
-        text: "Edit",
-        style: "destructive",
-        onPress: async (text) => {
-          const newToDos = { ...toDos };
-          const editToDo = newToDos[id];
-          editToDo.text = text;
-          setToDos(newToDos);
-          await saveToDos(newToDos);
+    Alert.prompt(
+      "Edit To Do?",
+      "Please Edit To DO",
+      [
+        { text: "Cancel" },
+        {
+          text: "Edit",
+          style: "destructive",
+          onPress: async (text) => {
+            const newToDos = { ...toDos };
+            const editToDo = newToDos[id];
+            editToDo.text = text;
+            setToDos(newToDos);
+            await saveToDos(newToDos);
+          },
         },
-      },
-    ]);
+      ],
+      "plain-text",
+      toDos[id].text
+    );
+  };
+  const deleteAll = async () => {
+    const newToDos = { ...toDos };
+    const newToDosKey = Object.keys(toDos).filter((todo) => {
+      return toDos[todo].working === working;
+    });
+    newToDosKey.filter((key) => delete newToDos[key]);
+    setToDos(newToDos);
+    await saveToDos(newToDos);
   };
   return (
     <View style={styles.container}>
@@ -156,55 +171,60 @@ export default function App() {
         <ActivityIndicator style={styles.loading} size="large" color="white" />
       ) : (
         <ScrollView>
-          {Object.keys(toDos).map((key) =>
-            toDos[key].working === working ? (
-              <View style={styles.toDo} key={key}>
-                <View style={styles.toDoContianer}>
-                  <TouchableOpacity onPress={() => finishToDo(key)}>
-                    {toDos[key].finish ? (
-                      <MaterialCommunityIcons
-                        name="checkbox-marked"
-                        size={24}
+          {Object.keys(toDos)
+            .map((key) =>
+              toDos[key].working === working ? (
+                <View style={styles.toDo} key={key}>
+                  <View style={styles.toDoContianer}>
+                    <TouchableOpacity onPress={() => finishToDo(key)}>
+                      {toDos[key].finish ? (
+                        <MaterialCommunityIcons
+                          name="checkbox-marked"
+                          size={24}
+                          color="white"
+                        />
+                      ) : (
+                        <MaterialCommunityIcons
+                          name="checkbox-blank"
+                          size={24}
+                          color="white"
+                        />
+                      )}
+                    </TouchableOpacity>
+                    <Text
+                      style={{
+                        ...styles.toDoText,
+                        textDecorationLine: toDos[key].finish
+                          ? "line-through"
+                          : "none",
+                      }}
+                    >
+                      {toDos[key].text}
+                    </Text>
+                  </View>
+                  <View style={styles.toDoContianer}>
+                    <TouchableOpacity onPress={() => editToDo(key)}>
+                      <Entypo
+                        name="edit"
+                        size={20}
                         color="white"
+                        style={{ marginRight: 10 }}
                       />
-                    ) : (
-                      <MaterialCommunityIcons
-                        name="checkbox-blank"
-                        size={24}
-                        color="white"
-                      />
-                    )}
-                  </TouchableOpacity>
-                  <Text
-                    style={{
-                      ...styles.toDoText,
-                      textDecorationLine: toDos[key].finish
-                        ? "line-through"
-                        : "none",
-                    }}
-                  >
-                    {toDos[key].text}
-                  </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => deleteToDo(key)}>
+                      <Ionicons name="ios-trash" size={20} color="white" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-
-                <View style={styles.toDoContianer}>
-                  <TouchableOpacity onPress={() => editToDo(key)}>
-                    <Entypo
-                      name="edit"
-                      size={20}
-                      color="white"
-                      style={{ marginRight: 10 }}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => deleteToDo(key)}>
-                    <Ionicons name="ios-trash" size={20} color="white" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : null
-          )}
+              ) : null
+            )
+            .sort()
+            .reverse()}
         </ScrollView>
       )}
+      <TouchableOpacity onPress={deleteAll} style={styles.deleteBtn}>
+        <Text style={styles.deleteBtnText}>Delete All</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -254,5 +274,18 @@ const styles = StyleSheet.create({
   },
   loading: {
     marginTop: 50,
+  },
+  deleteBtn: {
+    marginTop: 50,
+    marginBottom: 100,
+    alignItems: "center",
+  },
+  deleteBtnText: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: theme.gray,
+    color: theme.white,
+    textAlign: "center",
+    borderRadius: 20,
   },
 });
