@@ -1,5 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
+import { Entypo } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import {
@@ -70,13 +72,16 @@ export default function App() {
   };
   const addToDo = async () => {
     if (text === "") return;
-    const newToDos = { ...toDos, [Date.now()]: { text, working } };
+    const newToDos = {
+      ...toDos,
+      [Date.now()]: { text, working, finish: false },
+    };
     setToDos(newToDos);
     await saveToDos(newToDos);
     setText("");
   };
   const deleteToDo = async (id) => {
-    Alert.alert("Delete To DO?", "Are you sure?", [
+    Alert.alert("Delete To DO?", "Are You Sure?", [
       { text: "Cancel" },
       {
         text: "I'm sure",
@@ -90,6 +95,29 @@ export default function App() {
       },
     ]);
     return;
+  };
+  const finishToDo = async (id) => {
+    const newToDos = { ...toDos };
+    const finishToDo = newToDos[id];
+    finishToDo.finish = !finishToDo.finish;
+    setToDos(newToDos);
+    await saveToDos(newToDos);
+  };
+  const editToDo = async (id) => {
+    Alert.prompt("Edit To Do", "Please Edit To DO", [
+      { text: "Cancel" },
+      {
+        text: "Edit",
+        style: "destructive",
+        onPress: async (text) => {
+          const newToDos = { ...toDos };
+          const editToDo = newToDos[id];
+          editToDo.text = text;
+          setToDos(newToDos);
+          await saveToDos(newToDos);
+        },
+      },
+    ]);
   };
   return (
     <View style={styles.container}>
@@ -131,10 +159,47 @@ export default function App() {
           {Object.keys(toDos).map((key) =>
             toDos[key].working === working ? (
               <View style={styles.toDo} key={key}>
-                <Text style={styles.toDoText}>{toDos[key].text}</Text>
-                <TouchableOpacity onPress={() => deleteToDo(key)}>
-                  <Ionicons name="ios-trash" size={20} color="white" />
-                </TouchableOpacity>
+                <View style={styles.toDoContianer}>
+                  <TouchableOpacity onPress={() => finishToDo(key)}>
+                    {toDos[key].finish ? (
+                      <MaterialCommunityIcons
+                        name="checkbox-marked"
+                        size={24}
+                        color="white"
+                      />
+                    ) : (
+                      <MaterialCommunityIcons
+                        name="checkbox-blank"
+                        size={24}
+                        color="white"
+                      />
+                    )}
+                  </TouchableOpacity>
+                  <Text
+                    style={{
+                      ...styles.toDoText,
+                      textDecorationLine: toDos[key].finish
+                        ? "line-through"
+                        : "none",
+                    }}
+                  >
+                    {toDos[key].text}
+                  </Text>
+                </View>
+
+                <View style={styles.toDoContianer}>
+                  <TouchableOpacity onPress={() => editToDo(key)}>
+                    <Entypo
+                      name="edit"
+                      size={20}
+                      color="white"
+                      style={{ marginRight: 10 }}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => deleteToDo(key)}>
+                    <Ionicons name="ios-trash" size={20} color="white" />
+                  </TouchableOpacity>
+                </View>
               </View>
             ) : null
           )}
@@ -174,13 +239,18 @@ const styles = StyleSheet.create({
     backgroundColor: theme.gray,
     marginBottom: 10,
     paddingVertical: 20,
-    paddingHorizontal: 40,
+    paddingHorizontal: 30,
     borderRadius: 30,
+  },
+  toDoContianer: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   toDoText: {
     color: theme.white,
     fontSize: 16,
     fontWeight: "600",
+    marginLeft: 5,
   },
   loading: {
     marginTop: 50,
