@@ -15,6 +15,8 @@ import {
   Alert,
 } from "react-native";
 import { theme } from "./colors";
+import { Header } from "./components/header";
+import { ToDo } from "./components/todo";
 
 const TYPE_KEY = "@type";
 const STORAGE_KEY = "@toDos";
@@ -137,28 +139,7 @@ export default function App() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <View style={styles.header}>
-        <TouchableOpacity onPress={work}>
-          <Text
-            style={{
-              ...styles.btnText,
-              color: working ? theme.white : theme.gray,
-            }}
-          >
-            Work
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={study}>
-          <Text
-            style={{
-              ...styles.btnText,
-              color: working ? theme.gray : theme.white,
-            }}
-          >
-            Study
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <Header working={working} work={work} study={study} />
       <TextInput
         onSubmitEditing={addToDo}
         onChangeText={onChangeText}
@@ -174,48 +155,14 @@ export default function App() {
           {Object.keys(toDos)
             .map((key) =>
               toDos[key].working === working ? (
-                <View style={styles.toDo} key={key}>
-                  <View style={styles.toDoContianer}>
-                    <TouchableOpacity onPress={() => finishToDo(key)}>
-                      {toDos[key].finish ? (
-                        <MaterialCommunityIcons
-                          name="checkbox-marked"
-                          size={24}
-                          color="white"
-                        />
-                      ) : (
-                        <MaterialCommunityIcons
-                          name="checkbox-blank"
-                          size={24}
-                          color="white"
-                        />
-                      )}
-                    </TouchableOpacity>
-                    <Text
-                      style={{
-                        ...styles.toDoText,
-                        textDecorationLine: toDos[key].finish
-                          ? "line-through"
-                          : "none",
-                      }}
-                    >
-                      {toDos[key].text}
-                    </Text>
-                  </View>
-                  <View style={styles.toDoContianer}>
-                    <TouchableOpacity onPress={() => editToDo(key)}>
-                      <Entypo
-                        name="edit"
-                        size={20}
-                        color="white"
-                        style={{ marginRight: 10 }}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => deleteToDo(key)}>
-                      <Ionicons name="ios-trash" size={20} color="white" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
+                <ToDo
+                  key={key}
+                  id={key}
+                  toDos={toDos}
+                  finishToDo={finishToDo}
+                  editToDo={editToDo}
+                  deleteToDo={deleteToDo}
+                />
               ) : null
             )
             .sort()
@@ -235,57 +182,18 @@ const styles = StyleSheet.create({
     backgroundColor: theme.bg,
     paddingHorizontal: 20,
   },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 100,
-  },
-  btnText: {
-    fontSize: 32,
-    fontWeight: "600",
-  },
-  input: {
-    backgroundColor: theme.white,
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderRadius: 30,
-    marginVertical: 20,
-    fontSize: 18,
-  },
-  toDo: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: theme.gray,
-    marginBottom: 10,
-    paddingVertical: 20,
-    paddingHorizontal: 30,
-    borderRadius: 30,
-  },
-  toDoContianer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  toDoText: {
-    color: theme.white,
-    fontSize: 16,
-    fontWeight: "600",
-    marginLeft: 5,
-  },
   loading: {
     marginTop: 50,
   },
   deleteBtn: {
-    marginTop: 50,
-    marginBottom: 100,
-    alignItems: "center",
+    marginVertical: 100,
+    marginHorizontal: 120,
+    paddingVertical: 10,
+    backgroundColor: theme.gray,
+    borderRadius: 30,
   },
   deleteBtnText: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: theme.gray,
     color: theme.white,
     textAlign: "center",
-    borderRadius: 20,
   },
 });
